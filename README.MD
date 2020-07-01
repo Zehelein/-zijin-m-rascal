@@ -15,14 +15,14 @@ Rascal is a rich pub/sub wrapper for the excellent amqplib. One of the best thin
 
 This project want to add more default features for rascal that:
 
-* default broker error handler
-* default publication event handler for success, return and error
-* republish message when confirm error from rabbitMQ
-* default subscription event handler for message, error and so on
-* auto ackOrNack message when no error throw form handler
-* ts support
-  
-# Examples 
+- default broker error handler
+- default publication event handler for success, return and error
+- republish message when confirm error from rabbitMQ
+- default subscription event handler for message, error and so on
+- auto ackOrNack message when no error throw form handler
+- ts support
+
+# Examples
 
 ### Config
 
@@ -30,90 +30,90 @@ With a Rascal config, [read more](https://github.com/guidesmiths/rascal#configur
 
 ```js
 module.exports = {
-    vhosts: {
-        "/": {
-            connection: {
-                protocol: "amqp",
-                hostname: "127.0.0.1",
-                port: 5672,
-                user: "guest",
-                password: "guest",
+  vhosts: {
+    "/": {
+      connection: {
+        protocol: "amqp",
+        hostname: "127.0.0.1",
+        port: 5672,
+        user: "guest",
+        password: "guest",
+      },
+      queues: {
+        "order.save.service_b": {
+          assert: true,
+          options: {
+            arguments: {
+              "x-dead-letter-exchange": "dead_letters",
+              "x-dead-letter-routing-key": "order.save",
             },
-            queues: {
-                "order.save.service_b": {
-                    assert: true,
-                    options:{
-                        arguments: {
-                            "x-dead-letter-exchange": "dead_letters",
-                            "x-dead-letter-routing-key": "order.save",
-                        }
-                    }
-                },
-                "dead_letters.order.save.service_b": {
-                    assert: true
-                }
-            },
-            exchanges: {
-                order: {
-                    type: "direct",
-                    assert: true
-                },
-                dead_letters: {
-                    type: "direct",
-                    assert: true,
-                }
-            },
-            bindings: {
-                "order.save.service_b": {
-                    source: "order",
-                    bindingKey: "save",
-                    destination: "order.save.service_b",
-                    destinationType: "queue"
-                },
-                "dead_letters.order.save.service_b": {
-                    source: "dead_letters",
-                    bindingKey: "order.save",
-                    destination: "dead_letters.order.save.service_b",
-                    destinationType: "queue"
-                },
-            },
-            publications: {
-                "order.save": {
-                    vhost: "/",
-                    exchange: "order",
-                    routingKey: "save"
-                },
-            },
-            subscriptions: {
-                "order.save": {
-                    queue: "order.save.service_b",
-                    prefetch: 1,
-                    vhost: "/",
-                    recovery: "deferred_retry",
-                    redeliveries: {
-                        limit: 10,
-                        counter: "shared"
-                    }
-                },
-            }
-        }
+          },
+        },
+        "dead_letters.order.save.service_b": {
+          assert: true,
+        },
+      },
+      exchanges: {
+        order: {
+          type: "direct",
+          assert: true,
+        },
+        dead_letters: {
+          type: "direct",
+          assert: true,
+        },
+      },
+      bindings: {
+        "order.save.service_b": {
+          source: "order",
+          bindingKey: "save",
+          destination: "order.save.service_b",
+          destinationType: "queue",
+        },
+        "dead_letters.order.save.service_b": {
+          source: "dead_letters",
+          bindingKey: "order.save",
+          destination: "dead_letters.order.save.service_b",
+          destinationType: "queue",
+        },
+      },
+      publications: {
+        "order.save": {
+          vhost: "/",
+          exchange: "order",
+          routingKey: "save",
+        },
+      },
+      subscriptions: {
+        "order.save": {
+          queue: "order.save.service_b",
+          prefetch: 1,
+          vhost: "/",
+          recovery: "deferred_retry",
+          redeliveries: {
+            limit: 10,
+            counter: "shared",
+          },
+        },
+      },
     },
-    recovery: {
-        deferred_retry: [
-            {
-                strategy: "nack",
-                requeue: true,
-                defer: 10 * 1000
-            }
-        ]
+  },
+  recovery: {
+    deferred_retry: [
+      {
+        strategy: "nack",
+        requeue: true,
+        defer: 10 * 1000,
+      },
+    ],
+  },
+  redeliveries: {
+    counters: {
+      shared: {
+        type: "inMemory",
+      },
     },
-    redeliveries: {
-        counters: {
-            shared: {
-                type: "inMemory",
-            }
-        }
-    }
+  },
 };
 ```
 
@@ -123,22 +123,22 @@ module.exports = {
 import { Broker, Consumer } from "@zijin-m/rascal";
 import config from "./config";
 
-const broker = await Broker.create(config)
-const publication = await broker.publish('order.save', 'some message') 
+const broker = await Broker.create(config);
+const publication = await broker.publish("order.save", "some message");
 ```
 
 when you publish message, `Publication` will use a `failedQueue` that save all failed confirm message, to retry failed messages when connection recovery event emit or interval timer success publish message that is head of `failedQueue` .
 
 Note
 
-*  `message` push to `failedQueue` only rabbitMQ return `error` confirm event, when return `return` confirm event, `Publication` will `nack` message, leading to message loss if you have not configured a dead letter exchange/queue.
+- `message` push to `failedQueue` only rabbitMQ return `error` confirm event, when return `return` confirm event, `Publication` will `nack` message, leading to message loss if you have not configured a dead letter exchange/queue.
 
 you can also add your event handlers by listen `broker.publish` returned `eventemitter` :
 
 ```js
-publication.on('error', console.error);
-publication.on('return', console.log);
-publication.on('success', console.log);
+publication.on("error", console.error);
+publication.on("return", console.log);
+publication.on("success", console.log);
 ```
 
 ### Subscribe
@@ -147,9 +147,9 @@ publication.on('success', console.log);
 import { Broker, Consumer, Message } from "@zijin-m/rascal";
 import config from "./config";
 
-class OrderSaveCousumer extends Consumer {
+class OrderSaveConsumer extends Consumer {
 
-    public readonly name = "order.save"; // set subscribe name or use new OrderSaveCousumer("order.save")
+    public readonly name = "order.save"; // set subscribe name or use new OrderSaveConsumer("order.save")
 
     async onMessage(content: any, message: Message) {
         // your code
@@ -158,13 +158,13 @@ class OrderSaveCousumer extends Consumer {
 }
 
 const broker = await Broker.create(config)
-await broker.addConsumer(new OrderSaveCousumer())
+await broker.addConsumer(new OrderSaveConsumer())
 
 ```
 
 ### auto ack
 
-you can write your message handler code in `onMessage` method, 
+you can write your message handler code in `onMessage` method,
 here are a few things that can happen:
 
 #### onMessage call completed normally
@@ -210,11 +210,12 @@ redeliveries: {
   }
 }
 ```
+
 after config, `Consumer` will use recovery `deferred_retry` to retry 10 time, each time defer `10 * 1000` ms to wait network or other make message failed reason recover. and if all 10 time failed, `Consumer` will `ackOrNack(err)` by listen `redeliveries_exceeded` that emitted by `rascal` [redeliveries_exceeded](https://github.com/guidesmiths/rascal#avoiding-potential-message-loss), leading to message loss if you have not configured a dead letter exchange/queue.
 
 #### Implementing your own counter
 
-`inMemory` counter only save timer in memory, it will loss when restart you app, 
+`inMemory` counter only save timer in memory, it will loss when restart you app,
 and not so accurate in cluster mode 。If want to protect yourself from redeliveries, you need to implement your own counter backed by something like redis. read more [implementing-your-own-counter](https://github.com/guidesmiths/rascal#implementing-your-own-counter).
 
 ### custom ack message
@@ -223,12 +224,12 @@ if you want to custom message by call `ackOrNack` your self, you can do like :
 
 ```js
 class OrderSaveConsumer extends Consumer {
-    async onMessage(content: any, message: Message, ackOrNack: AckOrNackFn) {
-        // your code
-        // see https://github.com/guidesmiths/rascal#message-acknowledgement-and-recovery-strategies
-        ackOrNack(err, { strategy: 'republish', defer: 1000 });
-    }
+  async onMessage(content: any, message: Message, ackOrNack: AckOrNackFn) {
+    // your code
+    // see https://github.com/guidesmiths/rascal#message-acknowledgement-and-recovery-strategies
+    ackOrNack(err, { strategy: "republish", defer: 1000 });
+  }
 }
 ```
-when you manual call ackOrNack , `Consumer` will not call it more.
 
+when you manual call ackOrNack , `Consumer` will not call it more.
