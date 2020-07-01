@@ -1,8 +1,10 @@
 import { Broker } from "..";
 import config from "./config";
+import { registerForShutdown } from "./shutdown";
 
 (async () => {
   const broker = await Broker.create(config);
+  registerForShutdown(broker);
 
   let counter = 0;
   setInterval(async () => {

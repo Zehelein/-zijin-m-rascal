@@ -1,5 +1,6 @@
 import { Broker, Consumer, Message } from "../dist";
 import config from "./config";
+import { registerForShutdown } from "./shutdown";
 
 (async () => {
   class OrderSaveConsumer extends Consumer {
@@ -26,5 +27,6 @@ import config from "./config";
   }
 
   const broker = await Broker.create(config);
+  registerForShutdown(broker);
   await broker.addConsumer(new OrderSaveConsumer());
 })();
